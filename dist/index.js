@@ -7121,6 +7121,12 @@ class GitCommandManager {
             return output.exitCode === 0;
         });
     }
+    tryCleanSubmodules() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const output = yield this.execGit(['submodule', 'foreach', '--recursive', `"${this.gitPath}"`, 'clean', '-ffdx'], true);
+            return output.exitCode === 0;
+        });
+    }
     tryConfigUnset(configKey, globalConfig) {
         return __awaiter(this, void 0, void 0, function* () {
             const output = yield this.execGit([
@@ -7153,7 +7159,7 @@ class GitCommandManager {
     }
     tryReset() {
         return __awaiter(this, void 0, void 0, function* () {
-            const output = yield this.execGit(['reset', '--hard', 'HEAD'], true);
+            const output = yield this.execGit(['reset', '--hard', 'HEAD', '--recurse-submodules'], true);
             return output.exitCode === 0;
         });
     }
@@ -8927,6 +8933,9 @@ function prepareExistingDirectory(git, repositoryPath, repositoryUrl, clean, ref
                     core.startGroup('Cleaning the repository');
                     if (!(yield git.tryClean())) {
                         core.debug(`The clean command failed. This might be caused by: 1) path too long, 2) permission issue, or 3) file in use. For futher investigation, manually run 'git clean -ffdx' on the directory '${repositoryPath}'.`);
+                        remove = true;
+                    }
+                    else if (!(yield git.tryCleanSubmodules())) {
                         remove = true;
                     }
                     else if (!(yield git.tryReset())) {
